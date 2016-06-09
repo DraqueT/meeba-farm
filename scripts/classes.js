@@ -1,5 +1,8 @@
 // In-game classes
 var abstractMethodError = "ABSTRACT METHOD CALLED WITHOUT IMPLEMENTATION."
+var baseMeebaArea = 25;
+var baseTrait = 5;
+var sizeTraitCost = 5; // TODO: this value was never discussed. Address later.
 
 var Meeba = function(_traits, _initialCalories, _environment) { // traits = array of traits, calories = initial calories
   // TODO: Figure out how damage resistance works
@@ -24,10 +27,18 @@ var Meeba = function(_traits, _initialCalories, _environment) { // traits = arra
   this.environment = _environment;
 };
 
-Meeba.prototype.getSize = function() { // returns size of meeba.
-  // TODO: THIS
-  // size should be based on initial calorie count
-  return 0;
+// returns size of meeba. (size in area, rather than radius)
+Meeba.prototype.getSize = function() { 
+  var ret = baseMeebaArea;
+  
+  for (i = 0; i < traits.length; i++) {
+    var testTrait = traits[i];
+    if (testTrait.type == A) {
+      ret += sizeTraitCost;
+    }
+  }
+  
+  return ret;
 };
 Meeba.prototype.getDeadCalories = function() { // calculates calories of corpse on death. One time calculation.
   // TODO: THIS
@@ -47,7 +58,7 @@ Meeba.prototype.feed = function(_calories) { // feeds the meeba the number of ca
 Meeba.prototype.roundActions = function() { 
   var ret = [];
   for (i = 0; i < traits.length; i++) {
-    var traitAction = traits[i].getActionEffect();
+    var traitAction = traits[i].actionEffect();
     if (traitAction.type == ActionEnum.NOTHING) {
       continue;
     }
@@ -96,11 +107,6 @@ Meeba.prototype.getCriticalHit = function() { // gets critical hit value for mee
   return 0;
 }
 
-
-
-
-
-
 // a condition to be tested on either a local meeba or its surroundings
 var ConditionNode = function() {
   // TODO: THIS
@@ -132,23 +138,31 @@ var ConditionList = function() {
   };
 };
 
- // abstract class should never be instantiated
+// abstract class: should never be instantiated
 var Trait = function() {
-  // returns trait of same type but with random duplication errors
-  this.duplicate = function() {throw abstractMethodError;};
-  
-  //returns EXACT duplicate of trait with no errors
-  this.exactDuplicate = function() {throw abstractMethodError;};
-  
-  // returns # of calories consumed passively by possessing this trait
-  this.inactiveConsumeCalories = function() {throw abstractMethodError;};
-  
-  // returns # of calories consumed when this trait's action is activated (0 if no action or free action)
-  this.activeConsumeCalories = function() {throw abstractMethodError;};
-  
-  // returns action object describing effects carried out by this action when activated (empty if none)
-  this.actionEffect = function() {throw abstractMethodError;};
 };
+// returns trait of same type but with random duplication errors
+Trait.prototype.duplicate = function() {throw abstractMethodError;};  
+//returns EXACT duplicate of trait with no errors
+Trait.prototype.exactDuplicate = function() {throw abstractMethodError;};
+// returns # of calories consumed passively by possessing this trait
+Trait.prototype.inactiveConsumeCalories = function() {throw abstractMethodError;};
+// returns # of calories consumed when this trait's action is activated (0 if no action or free action)
+Trait.prototype.activeConsumeCalories = function() {throw abstractMethodError;};
+// returns action object describing effects carried out by this action when activated (action of type NOTHING if none)
+Trait.prototype.actionEffect = function() {throw abstractMethodError;};
+
+// implementation of Trait class: blank size trait. Only serves to increase size of meeba
+var SizeTrait = function() {
+}
+Trait.call(this);
+SizeTrait.prototype.duplicate = function() {return SizeTrait();}; // size traits are all identical
+SizeTrait.prototype.exactDuplicate = function() {return SizeTrait();}; // ditto
+SizeTrait.prototype.inactiveConsumeCalories = function() {return sizeTraitCost;};
+SizeTrait.prototype.activeConsumeCalories = function() {return 0;};
+SizeTrait.prototype.actionEffect = function() {Action(ActionEffect.NOTHING);};
+SizeTrait.prototype = Object.create(Trait.prototype);
+SizeTrait.prototype.constructor = Trait;
 
 // the type for actions
 var ActionEnum = {
